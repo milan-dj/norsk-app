@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#f5f1e8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Norsk">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Norsk · Daily Words</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..900,0..100,0..1&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f5f1e8;
+    --paper-deep: #ebe5d4;
+    --ink: #1a2332;
+    --ink-soft: #3a4556;
+    --muted: #7a8090;
+    --coral: #e05a47;
+    --coral-soft: #f4a896;
+    --sage: #5a7a5a;
+    --gold: #c4933f;
+    --line: rgba(26, 35, 50, 0.12);
+    --line-strong: rgba(26, 35, 50, 0.25);
+    --shadow-soft: 0 1px 3px rgba(26, 35, 50, 0.06), 0 8px 24px rgba(26, 35, 50, 0.04);
+    --shadow-card: 0 2px 8px rgba(26, 35, 50, 0.08), 0 24px 48px rgba(26, 35, 50, 0.1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    overflow-x: hidden;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(224, 90, 71, 0.04), transparent 40%),
+      radial-gradient(circle at 80% 90%, rgba(90, 122, 90, 0.05), transparent 50%);
+  }
+
+  /* Paper grain overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.4;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.1 0 0 0 0 0.13 0 0 0 0 0.2 0 0 0 0.04 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    z-index: 1;
+  }
+
+  .app {
+    max-width: 520px;
+    margin: 0 auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* ============ HEADER ============ */
+  header {
+    padding: 32px 28px 16px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .brand {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-variation-settings: 'SOFT' 50, 'WONK' 1, 'opsz' 144;
+    font-size: 28px;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .brand em {
+    font-style: italic;
+    color: var(--coral);
+    font-weight: 400;
+  }
+
+  .meta {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  /* ============ STATS BAR ============ */
+  .stats {
+    padding: 20px 28px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+    border-bottom: 1px solid var(--line);
+  }
+  .stat {
+    text-align: center;
+  }
+  .stat-num {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-variation-settings: 'opsz' 144;
+    font-size: 28px;
+    line-height: 1;
+    color: var(--ink);
+  }
+  .stat-num.accent { color: var(--coral); }
+  .stat-num.sage { color: var(--sage); }
+  .stat-num.gold { color: var(--gold); }
+  .stat-label {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 6px;
+    font-weight: 500;
+  }
+
+  /* ============ MAIN ============ */
+  main {
+    flex: 1;
+    padding: 32px 28px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+  }
+
+  .screen { display: none; animation: fadeIn 0.4s ease; }
+  .screen.active { display: block; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ============ CARD (flashcard) ============ */
+  .card-wrap {
+    perspective: 1200px;
+    margin-bottom: 28px;
+  }
+  .card {
+    position: relative;
+    background: #fdfbf4;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 56px 32px;
+    min-height: 320px;
+    box-shadow: var(--shadow-card);
+    transform-style: preserve-3d;
+    transition: transform 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
+    cursor: pointer;
+    overflow: hidden;
+  }
+  .card.flipped { transform: rotateY(180deg); }
+
+  .card-face {
+    position: absolute;
+    inset: 0;
+    padding: 56px 32px;
+    backface-visibility: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .card-back { transform: rotateY(180deg); }
+
+  .card-corner {
+    position: absolute;
+    top: 20px;
+    right: 24px;
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 400;
+  }
+  .card-num {
+    position: absolute;
+    top: 20px;
+    left: 24px;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .card-center {
+    text-align: center;
+    margin: auto 0;
+  }
+  .word-no {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    font-variation-settings: 'opsz' 144, 'SOFT' 50;
+    font-size: clamp(40px, 9vw, 56px);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+  .word-pos {
+    display: inline-block;
+    margin-top: 12px;
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 15px;
+    color: var(--coral);
+    padding: 0 10px;
+  }
+  .word-pos::before, .word-pos::after {
+    content: '·';
+    color: var(--line-strong);
+    margin: 0 8px;
+  }
+
+  .word-en {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    font-size: clamp(32px, 7.5vw, 44px);
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+  }
+  .word-example {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+  .word-example-en {
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 14px;
+    font-style: normal;
+  }
+
+  .card-hint {
+    text-align: center;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .card-hint::before {
+    content: '↓ ';
+    opacity: 0.5;
+  }
+
+  /* ============ RATING BUTTONS ============ */
+  .ratings {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .ratings.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .rate-btn {
+    background: #fdfbf4;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 14px 6px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .rate-btn:active { transform: scale(0.96); }
+  .rate-btn:hover { background: var(--paper-deep); }
+
+  .rate-btn .glyph {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 500;
+    line-height: 1;
+  }
+  .rate-btn .lbl {
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .rate-1 .glyph { color: var(--coral); }
+  .rate-2 .glyph { color: var(--gold); }
+  .rate-3 .glyph { color: var(--sage); }
+  .rate-4 .glyph { color: var(--ink); }
+
+  /* ============ DIRECTION SWITCHER ============ */
+  .direction {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 20px;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 3px;
+    background: rgba(255,255,255,0.4);
+  }
+  .dir-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 9px 12px;
+    font-family: inherit;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    cursor: pointer;
+    border-radius: 2px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .dir-btn.active {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  /* ============ EMPTY / DONE STATE ============ */
+  .empty {
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .empty-mark {
+    font-family: 'Fraunces', serif;
+    font-size: 72px;
+    font-style: italic;
+    color: var(--coral);
+    line-height: 1;
+    font-weight: 300;
+  }
+  .empty-title {
+    font-family: 'Fraunces', serif;
+    font-size: 28px;
+    margin-top: 20px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  .empty-text {
+    color: var(--muted);
+    margin-top: 12px;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .empty-btn {
+    margin-top: 28px;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    padding: 14px 28px;
+    font-family: inherit;
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 2px;
+  }
+
+  /* ============ NAV (bottom) ============ */
+  nav {
+    padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    background: var(--paper);
+  }
+  .nav-btn {
+    background: transparent;
+    border: none;
+    padding: 10px 6px;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    border-radius: 2px;
+    transition: all 0.2s;
+  }
+  .nav-btn:active { transform: scale(0.96); }
+  .nav-icon {
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--muted);
+    line-height: 1;
+  }
+  .nav-lbl {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .nav-btn.active .nav-icon,
+  .nav-btn.active .nav-lbl { color: var(--ink); }
+  .nav-btn.active .nav-icon { color: var(--coral); }
+
+  /* ============ BROWSE SCREEN ============ */
+  .browse-filter {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+  .chip {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 7px 12px;
+    border-radius: 20px;
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 500;
+  }
+  .chip.active {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+
+  .word-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: var(--line);
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    margin: 0 -28px;
+  }
+  .word-item {
+    background: var(--paper);
+    padding: 14px 28px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .word-item-no {
+    font-family: 'Fraunces', serif;
+    font-size: 19px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  .word-item-en {
+    color: var(--muted);
+    font-size: 13px;
+    text-align: right;
+    flex-shrink: 0;
+    max-width: 50%;
+  }
+  .word-item-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-right: 10px;
+    background: var(--line-strong);
+    vertical-align: middle;
+  }
+  .word-item-dot.learning { background: var(--gold); }
+  .word-item-dot.known { background: var(--sage); }
+
+  /* ============ STATS SCREEN ============ */
+  .stats-section {
+    margin-bottom: 32px;
+  }
+  .stats-heading {
+    font-family: 'Fraunces', serif;
+    font-size: 24px;
+    margin-bottom: 16px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  .stats-heading em {
+    font-style: italic;
+    color: var(--coral);
+    font-weight: 400;
+  }
+
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 14px;
+  }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-row span:first-child { color: var(--ink-soft); }
+  .stat-row span:last-child {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 17px;
+  }
+
+  .progress-bar {
+    height: 6px;
+    background: var(--paper-deep);
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 10px 0 20px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--coral), var(--gold));
+    border-radius: 3px;
+    transition: width 0.6s ease;
+  }
+
+  .settings-btn {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--line);
+    padding: 13px;
+    font-family: inherit;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    margin-top: 8px;
+  }
+  .settings-btn:hover { background: var(--paper-deep); }
+  .settings-btn.danger { color: var(--coral); }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%) translateY(30px);
+    background: var(--ink);
+    color: var(--paper);
+    padding: 12px 24px;
+    border-radius: 100px;
+    font-size: 13px;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s;
+    z-index: 100;
+    box-shadow: var(--shadow-card);
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Small screens */
+  @media (max-width: 360px) {
+    header { padding: 24px 20px 12px; }
+    .stats { padding: 16px 20px; }
+    main { padding: 24px 20px; }
+    .card, .card-face { padding: 44px 22px; }
+    nav { padding-left: 12px; padding-right: 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="brand">Norsk<em>.</em></div>
+    <div class="meta" id="dateMeta">—</div>
+  </header>
+
+  <section class="stats">
+    <div class="stat">
+      <div class="stat-num" id="stat-due">0</div>
+      <div class="stat-label">Due</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num gold" id="stat-learning">0</div>
+      <div class="stat-label">Learning</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num sage" id="stat-known">0</div>
+      <div class="stat-label">Known</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num accent" id="stat-streak">0</div>
+      <div class="stat-label">Streak</div>
+    </div>
+  </section>
+
+  <main>
+    <!-- STUDY SCREEN -->
+    <div class="screen active" id="screen-study">
+      <div class="direction">
+        <button class="dir-btn active" data-dir="no-en">Norsk → Engelsk</button>
+        <button class="dir-btn" data-dir="en-no">Engelsk → Norsk</button>
+      </div>
+
+      <div id="card-container"></div>
+
+      <div class="ratings" id="ratings">
+        <button class="rate-btn rate-1" data-rate="1">
+          <div class="glyph">✕</div>
+          <div class="lbl">Again</div>
+        </button>
+        <button class="rate-btn rate-2" data-rate="2">
+          <div class="glyph">~</div>
+          <div class="lbl">Hard</div>
+        </button>
+        <button class="rate-btn rate-3" data-rate="3">
+          <div class="glyph">✓</div>
+          <div class="lbl">Good</div>
+        </button>
+        <button class="rate-btn rate-4" data-rate="4">
+          <div class="glyph">✓✓</div>
+          <div class="lbl">Easy</div>
+        </button>
+      </div>
+    </div>
+
+    <!-- BROWSE SCREEN -->
+    <div class="screen" id="screen-browse">
+      <div class="stats-heading">Words <em>—</em> <span id="browseCount">0</span></div>
+      <div class="browse-filter">
+        <button class="chip active" data-filter="all">All</button>
+        <button class="chip" data-filter="new">New</button>
+        <button class="chip" data-filter="learning">Learning</button>
+        <button class="chip" data-filter="known">Known</button>
+      </div>
+      <div class="word-list" id="wordList"></div>
+    </div>
+
+    <!-- STATS SCREEN -->
+    <div class="screen" id="screen-stats">
+      <div class="stats-section">
+        <div class="stats-heading">Your progress <em>·</em></div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="stat-row"><span>Words seen</span><span id="prog-seen">0</span></div>
+        <div class="stat-row"><span>Words known</span><span id="prog-known">0</span></div>
+        <div class="stat-row"><span>Words in total</span><span id="prog-total">0</span></div>
+        <div class="stat-row"><span>Reviews today</span><span id="prog-today">0</span></div>
+        <div class="stat-row"><span>Current streak</span><span id="prog-streak">0 days</span></div>
+      </div>
+
+      <div class="stats-section">
+        <div class="stats-heading">Settings <em>·</em></div>
+        <div class="stat-row"><span>New words per day</span><span id="daily-new">10</span></div>
+        <button class="settings-btn" id="adjust-new">Adjust daily target</button>
+        <button class="settings-btn danger" id="reset-progress">Reset all progress</button>
+      </div>
+    </div>
+  </main>
+
+  <nav>
+    <button class="nav-btn active" data-screen="study">
+      <div class="nav-icon">A</div>
+      <div class="nav-lbl">Study</div>
+    </button>
+    <button class="nav-btn" data-screen="browse">
+      <div class="nav-icon">≡</div>
+      <div class="nav-lbl">Browse</div>
+    </button>
+    <button class="nav-btn" data-screen="stats">
+      <div class="nav-icon">◉</div>
+      <div class="nav-lbl">Stats</div>
+    </button>
+  </nav>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   NORSK · Spaced Repetition Vocabulary App
+   Uses a simplified SM-2 algorithm.
+   Data is saved to localStorage.
+========================================================= */
+
+/* --- WORD LIST ---
+   A curated starter set from the top ~1000 most-used Norwegian words (Bokmål).
+   You can grow this list any time by appending to WORDS.
+   Each word: { no, en, pos, example, example_en }
+*/
+const WORDS = [
+  { no:"og", en:"and", pos:"conj", example:"Jeg liker kaffe og te.", example_en:"I like coffee and tea." },
+  { no:"i", en:"in", pos:"prep", example:"Hun bor i Oslo.", example_en:"She lives in Oslo." },
+  { no:"jeg", en:"I", pos:"pron", example:"Jeg er trøtt.", example_en:"I am tired." },
+  { no:"det", en:"it / that", pos:"pron", example:"Det er kaldt ute.", example_en:"It is cold outside." },
+  { no:"at", en:"that", pos:"conj", example:"Jeg vet at du kommer.", example_en:"I know that you are coming." },
+  { no:"en", en:"a / one", pos:"art", example:"En gang i uken.", example_en:"Once a week." },
+  { no:"et", en:"a / one (neuter)", pos:"art", example:"Et hus står der.", example_en:"A house stands there." },
+  { no:"til", en:"to", pos:"prep", example:"Jeg går til butikken.", example_en:"I'm going to the store." },
+  { no:"er", en:"is / are / am", pos:"verb", example:"Han er lærer.", example_en:"He is a teacher." },
+  { no:"som", en:"as / who / which", pos:"conj", example:"Mannen som står der.", example_en:"The man who stands there." },
+  { no:"på", en:"on / at", pos:"prep", example:"Boken ligger på bordet.", example_en:"The book is on the table." },
+  { no:"de", en:"they", pos:"pron", example:"De kommer i kveld.", example_en:"They're coming tonight." },
+  { no:"med", en:"with", pos:"prep", example:"Jeg bor med min bror.", example_en:"I live with my brother." },
+  { no:"han", en:"he", pos:"pron", example:"Han er min venn.", example_en:"He is my friend." },
+  { no:"av", en:"of / by", pos:"prep", example:"En venn av meg.", example_en:"A friend of mine." },
+  { no:"ikke", en:"not", pos:"adv", example:"Jeg vet ikke.", example_en:"I don't know." },
+  { no:"der", en:"there", pos:"adv", example:"Hun er der.", example_en:"She is there." },
+  { no:"så", en:"so / then", pos:"adv", example:"Så vi drar nå.", example_en:"So we're leaving now." },
+  { no:"var", en:"was / were", pos:"verb", example:"Det var gøy.", example_en:"It was fun." },
+  { no:"meg", en:"me", pos:"pron", example:"Gi meg boken.", example_en:"Give me the book." },
+  { no:"seg", en:"oneself", pos:"pron", example:"Hun vasker seg.", example_en:"She washes herself." },
+  { no:"men", en:"but", pos:"conj", example:"Jeg vil, men kan ikke.", example_en:"I want to, but can't." },
+  { no:"et år", en:"a year", pos:"noun", example:"Et år går fort.", example_en:"A year goes quickly." },
+  { no:"seg", en:"oneself (reflex.)", pos:"pron", example:"Han liker seg her.", example_en:"He likes it here." },
+  { no:"du", en:"you", pos:"pron", example:"Hvor er du?", example_en:"Where are you?" },
+  { no:"om", en:"about / if", pos:"prep", example:"Vi snakker om deg.", example_en:"We're talking about you." },
+  { no:"hun", en:"she", pos:"pron", example:"Hun er søt.", example_en:"She is cute." },
+  { no:"bare", en:"just / only", pos:"adv", example:"Jeg er bare trøtt.", example_en:"I'm just tired." },
+  { no:"å ha", en:"to have", pos:"verb", example:"Jeg vil ha kaffe.", example_en:"I want to have coffee." },
+  { no:"for", en:"for / because", pos:"prep", example:"Dette er for deg.", example_en:"This is for you." },
+  { no:"å være", en:"to be", pos:"verb", example:"Å være eller ikke være.", example_en:"To be or not to be." },
+  { no:"et menneske", en:"a human", pos:"noun", example:"Hvert menneske er unikt.", example_en:"Every human is unique." },
+  { no:"en mann", en:"a man", pos:"noun", example:"En mann går forbi.", example_en:"A man walks by." },
+  { no:"etter", en:"after", pos:"prep", example:"Etter middag går vi.", example_en:"After dinner we leave." },
+  { no:"noe", en:"something", pos:"pron", example:"Jeg må si noe.", example_en:"I need to say something." },
+  { no:"ut", en:"out", pos:"adv", example:"Gå ut!", example_en:"Go out!" },
+  { no:"å si", en:"to say", pos:"verb", example:"Hva vil du si?", example_en:"What do you want to say?" },
+  { no:"opp", en:"up", pos:"adv", example:"Kom opp!", example_en:"Come up!" },
+  { no:"å gjøre", en:"to do", pos:"verb", example:"Hva skal vi gjøre?", example_en:"What shall we do?" },
+  { no:"når", en:"when", pos:"adv", example:"Når kommer du?", example_en:"When are you coming?" },
+  { no:"må", en:"must", pos:"verb", example:"Jeg må gå.", example_en:"I must go." },
+  { no:"over", en:"over / above", pos:"prep", example:"Over huset.", example_en:"Above the house." },
+  { no:"eller", en:"or", pos:"conj", example:"Te eller kaffe?", example_en:"Tea or coffee?" },
+  { no:"hva", en:"what", pos:"pron", example:"Hva heter du?", example_en:"What is your name?" },
+  { no:"mye", en:"much / a lot", pos:"adv", example:"Tusen takk, det var mye.", example_en:"Thanks, that was a lot." },
+  { no:"å komme", en:"to come", pos:"verb", example:"Kom hit!", example_en:"Come here!" },
+  { no:"å kunne", en:"to be able to", pos:"verb", example:"Jeg kan svømme.", example_en:"I can swim." },
+  { no:"nå", en:"now", pos:"adv", example:"Vi drar nå.", example_en:"We're leaving now." },
+  { no:"et hus", en:"a house", pos:"noun", example:"Et stort hus.", example_en:"A big house." },
+  { no:"godt", en:"good / well", pos:"adv", example:"Det smaker godt.", example_en:"It tastes good." },
+  { no:"også", en:"also / too", pos:"adv", example:"Jeg kommer også.", example_en:"I'm coming too." },
+  { no:"fra", en:"from", pos:"prep", example:"Jeg er fra Norge.", example_en:"I'm from Norway." },
+  { no:"vi", en:"we", pos:"pron", example:"Vi er venner.", example_en:"We are friends." },
+  { no:"har", en:"has / have", pos:"verb", example:"Jeg har en katt.", example_en:"I have a cat." },
+  { no:"kan", en:"can", pos:"verb", example:"Kan du hjelpe?", example_en:"Can you help?" },
+  { no:"hvis", en:"if", pos:"conj", example:"Hvis det regner, blir jeg hjemme.", example_en:"If it rains, I'll stay home." },
+  { no:"igjen", en:"again", pos:"adv", example:"Prøv igjen.", example_en:"Try again." },
+  { no:"her", en:"here", pos:"adv", example:"Kom her.", example_en:"Come here." },
+  { no:"meget", en:"very", pos:"adv", example:"Meget bra.", example_en:"Very good." },
+  { no:"skal", en:"shall / will", pos:"verb", example:"Jeg skal reise.", example_en:"I will travel." },
+  { no:"ble", en:"became", pos:"verb", example:"Han ble glad.", example_en:"He became happy." },
+  { no:"å gå", en:"to walk / go", pos:"verb", example:"Vi går en tur.", example_en:"We're going for a walk." },
+  { no:"å se", en:"to see", pos:"verb", example:"Jeg ser deg.", example_en:"I see you." },
+  { no:"å tro", en:"to believe", pos:"verb", example:"Jeg tror på deg.", example_en:"I believe in you." },
+  { no:"å få", en:"to get / receive", pos:"verb", example:"Får jeg spørre?", example_en:"May I ask?" },
+  { no:"et barn", en:"a child", pos:"noun", example:"Et lite barn.", example_en:"A small child." },
+  { no:"en dag", en:"a day", pos:"noun", example:"En fin dag.", example_en:"A lovely day." },
+  { no:"en gang", en:"once / a time", pos:"noun", example:"En gang til.", example_en:"One more time." },
+  { no:"enn", en:"than", pos:"conj", example:"Større enn meg.", example_en:"Bigger than me." },
+  { no:"selv", en:"self / even", pos:"pron", example:"Jeg gjør det selv.", example_en:"I'll do it myself." },
+  { no:"alle", en:"all / everyone", pos:"pron", example:"Alle er her.", example_en:"Everyone is here." },
+  { no:"disse", en:"these", pos:"pron", example:"Disse bøkene.", example_en:"These books." },
+  { no:"å stå", en:"to stand", pos:"verb", example:"Stå stille!", example_en:"Stand still!" },
+  { no:"noen", en:"someone / some", pos:"pron", example:"Noen ringer.", example_en:"Someone is calling." },
+  { no:"sin", en:"his / her / its own", pos:"pron", example:"Han tok sin jakke.", example_en:"He took his (own) jacket." },
+  { no:"en tid", en:"a time / era", pos:"noun", example:"På den tiden.", example_en:"At that time." },
+  { no:"mellom", en:"between", pos:"prep", example:"Mellom deg og meg.", example_en:"Between you and me." },
+  { no:"å ta", en:"to take", pos:"verb", example:"Ta en kopp te.", example_en:"Take a cup of tea." },
+  { no:"meget", en:"much / very", pos:"adv", example:"Meget interessant.", example_en:"Very interesting." },
+  { no:"hvor", en:"where", pos:"adv", example:"Hvor er boken?", example_en:"Where is the book?" },
+  { no:"ved", en:"by / at", pos:"prep", example:"Jeg står ved døra.", example_en:"I'm standing by the door." },
+  { no:"liten", en:"small", pos:"adj", example:"En liten katt.", example_en:"A small cat." },
+  { no:"stor", en:"big", pos:"adj", example:"Et stort hus.", example_en:"A big house." },
+  { no:"et land", en:"a country", pos:"noun", example:"Norge er et land.", example_en:"Norway is a country." },
+  { no:"en tid", en:"a time", pos:"noun", example:"Det er lang tid siden.", example_en:"It's been a long time." },
+  { no:"da", en:"then / when", pos:"adv", example:"Da ble jeg glad.", example_en:"Then I was happy." },
+  { no:"ny", en:"new", pos:"adj", example:"En ny bil.", example_en:"A new car." },
+  { no:"en bok", en:"a book", pos:"noun", example:"En god bok.", example_en:"A good book." },
+  { no:"en venn", en:"a friend", pos:"noun", example:"Min beste venn.", example_en:"My best friend." },
+  { no:"en skole", en:"a school", pos:"noun", example:"Barna går på skolen.", example_en:"The kids go to school." },
+  { no:"en bil", en:"a car", pos:"noun", example:"En rød bil.", example_en:"A red car." },
+  { no:"en jobb", en:"a job", pos:"noun", example:"En god jobb.", example_en:"A good job." },
+  { no:"et språk", en:"a language", pos:"noun", example:"Norsk er et språk.", example_en:"Norwegian is a language." },
+  { no:"et ord", en:"a word", pos:"noun", example:"Et nytt ord.", example_en:"A new word." },
+  { no:"en uke", en:"a week", pos:"noun", example:"Neste uke.", example_en:"Next week." },
+  { no:"en morgen", en:"a morning", pos:"noun", example:"God morgen!", example_en:"Good morning!" },
+  { no:"en kveld", en:"an evening", pos:"noun", example:"God kveld!", example_en:"Good evening!" },
+  { no:"en natt", en:"a night", pos:"noun", example:"God natt!", example_en:"Good night!" },
+  { no:"i dag", en:"today", pos:"adv", example:"I dag er fredag.", example_en:"Today is Friday." },
+  { no:"i morgen", en:"tomorrow", pos:"adv", example:"Vi sees i morgen.", example_en:"See you tomorrow." },
+  { no:"i går", en:"yesterday", pos:"adv", example:"I går regnet det.", example_en:"Yesterday it rained." },
+  { no:"bra", en:"good / fine", pos:"adj", example:"Hvordan går det? Bra!", example_en:"How's it going? Fine!" },
+  { no:"fin", en:"nice / fine", pos:"adj", example:"En fin dag.", example_en:"A nice day." },
+  { no:"glad", en:"happy", pos:"adj", example:"Jeg er glad.", example_en:"I am happy." },
+  { no:"trist", en:"sad", pos:"adj", example:"Hun er trist.", example_en:"She is sad." },
+  { no:"gammel", en:"old", pos:"adj", example:"En gammel mann.", example_en:"An old man." },
+  { no:"ung", en:"young", pos:"adj", example:"En ung jente.", example_en:"A young girl." },
+  { no:"å snakke", en:"to speak", pos:"verb", example:"Jeg snakker norsk.", example_en:"I speak Norwegian." },
+  { no:"å lære", en:"to learn", pos:"verb", example:"Jeg lærer norsk.", example_en:"I'm learning Norwegian." },
+  { no:"å lese", en:"to read", pos:"verb", example:"Han leser en bok.", example_en:"He is reading a book." },
+  { no:"å skrive", en:"to write", pos:"verb", example:"Jeg skriver et brev.", example_en:"I'm writing a letter." },
+  { no:"å høre", en:"to hear", pos:"verb", example:"Hører du meg?", example_en:"Can you hear me?" },
+  { no:"å spise", en:"to eat", pos:"verb", example:"Vi spiser middag.", example_en:"We eat dinner." },
+  { no:"å drikke", en:"to drink", pos:"verb", example:"Jeg drikker vann.", example_en:"I drink water." },
+  { no:"å sove", en:"to sleep", pos:"verb", example:"Jeg vil sove.", example_en:"I want to sleep." },
+  { no:"å jobbe", en:"to work", pos:"verb", example:"Han jobber mye.", example_en:"He works a lot." },
+  { no:"å bo", en:"to live (reside)", pos:"verb", example:"Jeg bor i Bergen.", example_en:"I live in Bergen." },
+  { no:"å elske", en:"to love", pos:"verb", example:"Jeg elsker deg.", example_en:"I love you." },
+  { no:"å like", en:"to like", pos:"verb", example:"Jeg liker sjokolade.", example_en:"I like chocolate." },
+  { no:"å vite", en:"to know (a fact)", pos:"verb", example:"Jeg vet det.", example_en:"I know it." },
+  { no:"å kjenne", en:"to know (person)", pos:"verb", example:"Jeg kjenner henne.", example_en:"I know her." },
+  { no:"å trenge", en:"to need", pos:"verb", example:"Jeg trenger hjelp.", example_en:"I need help." },
+  { no:"å hjelpe", en:"to help", pos:"verb", example:"Kan du hjelpe meg?", example_en:"Can you help me?" },
+  { no:"å forstå", en:"to understand", pos:"verb", example:"Jeg forstår ikke.", example_en:"I don't understand." },
+  { no:"å tenke", en:"to think", pos:"verb", example:"La meg tenke.", example_en:"Let me think." },
+  { no:"å vente", en:"to wait", pos:"verb", example:"Vent litt!", example_en:"Wait a moment!" },
+  { no:"å prøve", en:"to try", pos:"verb", example:"Prøv igjen.", example_en:"Try again." },
+  { no:"vann", en:"water", pos:"noun", example:"Et glass vann.", example_en:"A glass of water." },
+  { no:"brød", en:"bread", pos:"noun", example:"Ferskt brød.", example_en:"Fresh bread." },
+  { no:"melk", en:"milk", pos:"noun", example:"Kald melk.", example_en:"Cold milk." },
+  { no:"kaffe", en:"coffee", pos:"noun", example:"En kopp kaffe.", example_en:"A cup of coffee." },
+  { no:"mat", en:"food", pos:"noun", example:"God mat.", example_en:"Good food." },
+  { no:"tid", en:"time", pos:"noun", example:"Jeg har ikke tid.", example_en:"I don't have time." },
+  { no:"en mor", en:"a mother", pos:"noun", example:"Min mor.", example_en:"My mother." },
+  { no:"en far", en:"a father", pos:"noun", example:"Min far.", example_en:"My father." },
+  { no:"en søster", en:"a sister", pos:"noun", example:"Min søster.", example_en:"My sister." },
+  { no:"en bror", en:"a brother", pos:"noun", example:"Min bror.", example_en:"My brother." },
+  { no:"et hjem", en:"a home", pos:"noun", example:"Velkommen hjem.", example_en:"Welcome home." },
+  { no:"en by", en:"a city", pos:"noun", example:"En stor by.", example_en:"A big city." },
+  { no:"takk", en:"thanks", pos:"interj", example:"Tusen takk!", example_en:"Thank you so much!" },
+  { no:"hei", en:"hi / hello", pos:"interj", example:"Hei, hvordan går det?", example_en:"Hi, how are you?" },
+  { no:"ja", en:"yes", pos:"interj", example:"Ja, takk.", example_en:"Yes, please." },
+  { no:"nei", en:"no", pos:"interj", example:"Nei, takk.", example_en:"No, thanks." },
+  { no:"unnskyld", en:"excuse me / sorry", pos:"interj", example:"Unnskyld meg.", example_en:"Excuse me." },
+  { no:"vær så snill", en:"please", pos:"phrase", example:"Hjelp meg, vær så snill.", example_en:"Help me, please." },
+  { no:"kanskje", en:"maybe", pos:"adv", example:"Kanskje i morgen.", example_en:"Maybe tomorrow." },
+  { no:"alltid", en:"always", pos:"adv", example:"Jeg er alltid sen.", example_en:"I'm always late." },
+  { no:"aldri", en:"never", pos:"adv", example:"Jeg sier aldri det.", example_en:"I never say that." },
+  { no:"ofte", en:"often", pos:"adv", example:"Jeg leser ofte.", example_en:"I read often." },
+  { no:"å åpne", en:"to open", pos:"verb", example:"Åpne døra!", example_en:"Open the door!" },
+  { no:"å lukke", en:"to close", pos:"verb", example:"Lukk vinduet.", example_en:"Close the window." },
+  { no:"å løpe", en:"to run", pos:"verb", example:"Jeg løper hver dag.", example_en:"I run every day." },
+  { no:"å sitte", en:"to sit", pos:"verb", example:"Sitt ned.", example_en:"Sit down." },
+  { no:"å ligge", en:"to lie (down)", pos:"verb", example:"Han ligger i sengen.", example_en:"He is lying in bed." },
+  { no:"å begynne", en:"to begin", pos:"verb", example:"La oss begynne.", example_en:"Let's begin." },
+  { no:"å slutte", en:"to stop / end", pos:"verb", example:"Slutt å snakke!", example_en:"Stop talking!" },
+  { no:"å bli", en:"to become / stay", pos:"verb", example:"Jeg blir hjemme.", example_en:"I'll stay home." },
+  { no:"å huske", en:"to remember", pos:"verb", example:"Jeg husker ikke.", example_en:"I don't remember." },
+  { no:"å glemme", en:"to forget", pos:"verb", example:"Ikke glem det!", example_en:"Don't forget it!" },
+  { no:"varm", en:"warm", pos:"adj", example:"Varm mat.", example_en:"Warm food." },
+  { no:"kald", en:"cold", pos:"adj", example:"Det er kaldt.", example_en:"It's cold." },
+  { no:"rask", en:"fast", pos:"adj", example:"En rask bil.", example_en:"A fast car." },
+  { no:"sakte", en:"slow", pos:"adj", example:"Snakk sakte.", example_en:"Speak slowly." },
+  { no:"lett", en:"easy / light", pos:"adj", example:"Det er lett.", example_en:"It is easy." },
+  { no:"vanskelig", en:"difficult", pos:"adj", example:"Det er vanskelig.", example_en:"It is difficult." },
+  { no:"god", en:"good", pos:"adj", example:"En god venn.", example_en:"A good friend." },
+  { no:"dårlig", en:"bad", pos:"adj", example:"Dårlig vær.", example_en:"Bad weather." },
+  { no:"sulten", en:"hungry", pos:"adj", example:"Jeg er sulten.", example_en:"I am hungry." },
+  { no:"tørst", en:"thirsty", pos:"adj", example:"Er du tørst?", example_en:"Are you thirsty?" },
+  { no:"trøtt", en:"tired", pos:"adj", example:"Jeg er trøtt.", example_en:"I am tired." },
+  { no:"rik", en:"rich", pos:"adj", example:"En rik mann.", example_en:"A rich man." },
+  { no:"fattig", en:"poor", pos:"adj", example:"Fattige barn.", example_en:"Poor children." },
+  { no:"morsom", en:"funny", pos:"adj", example:"En morsom film.", example_en:"A funny movie." },
+  { no:"kjedelig", en:"boring", pos:"adj", example:"Et kjedelig møte.", example_en:"A boring meeting." }
+];
+
+/* --- STATE & STORAGE --- */
+const STORAGE_KEY = 'norsk_app_v1';
+const DEFAULTS = {
+  cards: {},        // idx -> { ef, reps, interval, due (ISO date), lapses }
+  lastStudy: null,  // ISO date string
+  streak: 0,
+  todayReviews: 0,
+  todayDate: null,
+  dailyNew: 10,
+  direction: 'no-en'
+};
+
+let state = loadState();
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const saved = raw ? JSON.parse(raw) : {};
+    return Object.assign({}, DEFAULTS, saved, { cards: saved.cards || {} });
+  } catch (e) { return Object.assign({}, DEFAULTS); }
+}
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){}
+}
+
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function addDays(dateStr, days) {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + days);
+  return todayStrFromDate(d);
+}
+function todayStrFromDate(d) {
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+// Roll over streak & today reviews if new day
+function checkDayRollover() {
+  const today = todayStr();
+  if (state.todayDate !== today) {
+    // If last study was yesterday, extend streak; if older, reset
+    if (state.lastStudy) {
+      const yesterday = (function(){
+        const d = new Date(); d.setDate(d.getDate()-1);
+        return todayStrFromDate(d);
+      })();
+      if (state.lastStudy === yesterday) {
+        // streak already correct
+      } else if (state.lastStudy !== today) {
+        // Reset streak if they skipped a day
+        state.streak = 0;
+      }
+    }
+    state.todayDate = today;
+    state.todayReviews = 0;
+    saveState();
+  }
+}
+
+/* --- SM-2 (simplified) --- */
+function initCard() {
+  return { ef: 2.5, reps: 0, interval: 0, due: todayStr(), lapses: 0, seen: false };
+}
+
+function gradeCard(idx, rating) {
+  // rating: 1=again, 2=hard, 3=good, 4=easy
+  const c = state.cards[idx] || initCard();
+  c.seen = true;
+
+  if (rating === 1) {
+    c.reps = 0;
+    c.interval = 0; // see again today
+    c.lapses = (c.lapses || 0) + 1;
+    c.ef = Math.max(1.3, c.ef - 0.2);
+    c.due = todayStr();
+  } else {
+    // Graduation intervals
+    if (c.reps === 0) {
+      c.interval = rating === 2 ? 1 : (rating === 3 ? 1 : 3);
+    } else if (c.reps === 1) {
+      c.interval = rating === 2 ? 3 : (rating === 3 ? 4 : 7);
+    } else {
+      const mult = rating === 2 ? 1.2 : (rating === 3 ? c.ef : c.ef * 1.3);
+      c.interval = Math.max(1, Math.round(c.interval * mult));
+    }
+    c.reps += 1;
+
+    // EF adjustment
+    const q = rating === 2 ? 3 : (rating === 3 ? 4 : 5);
+    c.ef = Math.max(1.3, c.ef + (0.1 - (5-q)*(0.08 + (5-q)*0.02)));
+    c.due = addDays(todayStr(), c.interval);
+  }
+
+  state.cards[idx] = c;
+  state.todayReviews = (state.todayReviews || 0) + 1;
+
+  // Streak: only bump once per day on first review
+  if (state.lastStudy !== todayStr()) {
+    state.streak = (state.streak || 0) + 1;
+    state.lastStudy = todayStr();
+  }
+  saveState();
+}
+
+/* --- QUEUE BUILDING --- */
+function getDueQueue() {
+  const today = todayStr();
+  const queue = [];
+  // Due reviews
+  for (let i = 0; i < WORDS.length; i++) {
+    const c = state.cards[i];
+    if (c && c.seen && c.due <= today) {
+      queue.push(i);
+    }
+  }
+  // New words (up to dailyNew per day, accounting for any new ones already shown today)
+  const newShownToday = Object.values(state.cards)
+    .filter(c => c.seen && c.reps === 0 && c.due === today)
+    .length;
+  const newSlots = Math.max(0, state.dailyNew - newShownToday);
+  let added = 0;
+  for (let i = 0; i < WORDS.length && added < newSlots; i++) {
+    if (!state.cards[i] || !state.cards[i].seen) {
+      queue.push(i);
+      added++;
+    }
+  }
+  return queue;
+}
+
+/* --- UI STATE --- */
+let currentQueue = [];
+let currentIdx = null;
+let isFlipped = false;
+
+function refreshStats() {
+  const today = todayStr();
+  const due = Object.entries(state.cards).filter(([_,c]) => c.seen && c.due <= today).length;
+  const learning = Object.values(state.cards).filter(c => c.seen && c.reps > 0 && c.interval < 21).length;
+  const known = Object.values(state.cards).filter(c => c.seen && c.reps > 0 && c.interval >= 21).length;
+  document.getElementById('stat-due').textContent = due + (currentQueue.length > due ? '+' : '');
+  document.getElementById('stat-learning').textContent = learning;
+  document.getElementById('stat-known').textContent = known;
+  document.getElementById('stat-streak').textContent = state.streak || 0;
+
+  // header date
+  const d = new Date();
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('dateMeta').textContent = months[d.getMonth()] + ' ' + d.getDate();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+/* --- RENDER CARD --- */
+function renderCard() {
+  const container = document.getElementById('card-container');
+  const ratings = document.getElementById('ratings');
+
+  if (currentQueue.length === 0) {
+    currentQueue = getDueQueue();
+  }
+
+  if (currentQueue.length === 0) {
+    // Nothing due
+    container.innerHTML = `
+      <div class="empty">
+        <div class="empty-mark">✓</div>
+        <div class="empty-title">All done for today</div>
+        <div class="empty-text">Come back tomorrow for your next review.<br/>Or browse words below to peek ahead.</div>
+        <button class="empty-btn" id="review-more">Review extra words</button>
+      </div>`;
+    ratings.classList.remove('visible');
+    document.getElementById('review-more').addEventListener('click', () => {
+      // Force extra new words: take next 5 unseen
+      const extras = [];
+      for (let i = 0; i < WORDS.length && extras.length < 5; i++) {
+        if (!state.cards[i] || !state.cards[i].seen) extras.push(i);
+      }
+      if (extras.length === 0) {
+        showToast('You\'ve seen every word in the deck.');
+        return;
+      }
+      currentQueue = extras;
+      drawNext();
+    });
+    return;
+  }
+
+  currentIdx = currentQueue[0];
+  isFlipped = false;
+  const w = WORDS[currentIdx];
+  const dir = state.direction;
+  const front = dir === 'no-en' ? w.no : w.en;
+  const back  = dir === 'no-en' ? w.en : w.no;
+  const cardNumDisplay = '№ ' + String(currentIdx + 1).padStart(3,'0');
+
+  container.innerHTML = `
+    <div class="card-wrap">
+      <div class="card" id="theCard">
+        <div class="card-face card-front">
+          <div class="card-num">${cardNumDisplay}</div>
+          <div class="card-corner">${w.pos}</div>
+          <div class="card-center">
+            <div class="${dir==='no-en' ? 'word-no' : 'word-en'}">${front}</div>
+            <div class="word-pos">${dir === 'no-en' ? 'tap to reveal' : 'tap to reveal'}</div>
+          </div>
+          <div class="card-hint">Tap card</div>
+        </div>
+        <div class="card-face card-back">
+          <div class="card-num">${cardNumDisplay}</div>
+          <div class="card-corner">${w.pos}</div>
+          <div class="card-center">
+            <div class="${dir==='no-en' ? 'word-en' : 'word-no'}">${back}</div>
+            <div class="word-example">${w.example}</div>
+            <div class="word-example-en">${w.example_en}</div>
+          </div>
+          <div class="card-hint" style="visibility:hidden;">—</div>
+        </div>
+      </div>
+    </div>`;
+
+  ratings.classList.remove('visible');
+
+  document.getElementById('theCard').addEventListener('click', () => {
+    isFlipped = !isFlipped;
+    const el = document.getElementById('theCard');
+    el.classList.toggle('flipped', isFlipped);
+    if (isFlipped) ratings.classList.add('visible');
+  });
+}
+
+function drawNext() {
+  // Remove the current from queue and render next
+  if (currentQueue.length) currentQueue.shift();
+  if (currentQueue.length === 0) currentQueue = getDueQueue();
+  renderCard();
+  refreshStats();
+}
+
+/* --- RATING HANDLERS --- */
+document.querySelectorAll('.rate-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (currentIdx === null || !isFlipped) return;
+    const rating = parseInt(btn.dataset.rate, 10);
+    gradeCard(currentIdx, rating);
+    // If user said "again", requeue at end of today's list
+    if (rating === 1) {
+      currentQueue.push(currentIdx);
+    }
+    drawNext();
+  });
+});
+
+/* --- DIRECTION --- */
+document.querySelectorAll('.dir-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    state.direction = btn.dataset.dir;
+    document.querySelectorAll('.dir-btn').forEach(b => b.classList.toggle('active', b===btn));
+    saveState();
+    renderCard();
+  });
+});
+
+/* --- NAV --- */
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = btn.dataset.screen;
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b===btn));
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-'+target).classList.add('active');
+    if (target === 'browse') renderBrowse();
+    if (target === 'stats') renderStats();
+  });
+});
+
+/* --- BROWSE --- */
+let browseFilter = 'all';
+document.querySelectorAll('.chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c===chip));
+    browseFilter = chip.dataset.filter;
+    renderBrowse();
+  });
+});
+
+function renderBrowse() {
+  const list = document.getElementById('wordList');
+  const count = document.getElementById('browseCount');
+  const rows = [];
+  for (let i = 0; i < WORDS.length; i++) {
+    const c = state.cards[i];
+    let status = 'new';
+    if (c && c.seen) {
+      status = (c.reps > 0 && c.interval >= 21) ? 'known' : 'learning';
+    }
+    if (browseFilter === 'all' || browseFilter === status) {
+      const w = WORDS[i];
+      rows.push(`
+        <div class="word-item">
+          <div>
+            <span class="word-item-dot ${status}"></span>
+            <span class="word-item-no">${w.no}</span>
+          </div>
+          <div class="word-item-en">${w.en}</div>
+        </div>`);
+    }
+  }
+  list.innerHTML = rows.join('') || '<div class="word-item"><div style="color:var(--muted);font-size:13px;padding:20px 0;width:100%;text-align:center;">No words in this category yet.</div></div>';
+  count.textContent = rows.length;
+}
+
+/* --- STATS SCREEN --- */
+function renderStats() {
+  const total = WORDS.length;
+  const seen = Object.values(state.cards).filter(c => c.seen).length;
+  const known = Object.values(state.cards).filter(c => c.seen && c.interval >= 21).length;
+
+  document.getElementById('prog-seen').textContent = seen;
+  document.getElementById('prog-known').textContent = known;
+  document.getElementById('prog-total').textContent = total;
+  document.getElementById('prog-today').textContent = state.todayReviews || 0;
+  document.getElementById('prog-streak').textContent = (state.streak || 0) + ' day' + (state.streak === 1 ? '' : 's');
+  document.getElementById('daily-new').textContent = state.dailyNew;
+
+  const pct = total ? (seen / total) * 100 : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+document.getElementById('adjust-new').addEventListener('click', () => {
+  const val = prompt('How many new words would you like to learn per day? (5–30 recommended)', state.dailyNew);
+  const n = parseInt(val, 10);
+  if (!isNaN(n) && n > 0 && n <= 100) {
+    state.dailyNew = n;
+    saveState();
+    renderStats();
+    showToast('Daily target set to ' + n + ' words');
+  }
+});
+
+document.getElementById('reset-progress').addEventListener('click', () => {
+  if (confirm('This will erase ALL your progress and streak. Are you sure?')) {
+    state = Object.assign({}, DEFAULTS, { cards: {} });
+    saveState();
+    currentQueue = [];
+    renderCard();
+    refreshStats();
+    renderStats();
+    showToast('Progress reset');
+  }
+});
+
+/* --- INIT --- */
+checkDayRollover();
+currentQueue = getDueQueue();
+renderCard();
+refreshStats();
+
+/* --- PWA: register service worker (will succeed if sw.js is hosted) --- */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {
+      // OK to fail silently if sw.js isn't present.
+    });
+  });
+}
+</script>
+</body>
+</html>

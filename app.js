@@ -1,17 +1,10 @@
 /* =========================================================
-   NORSK · App Logic (Separated JS)
+   NORSK · App Logic
 ========================================================= */
 
-/* --- WORD LIST (keep or move later) --- */
-const WORDS = [
-  { no:"og", en:"and", pos:"conj", example:"Jeg liker kaffe og te.", example_en:"I like coffee and tea." },
-  { no:"i", en:"in", pos:"prep", example:"Hun bor i Oslo.", example_en:"She lives in Oslo." },
-  { no:"jeg", en:"I", pos:"pron", example:"Jeg er trøtt.", example_en:"I am tired." },
-  { no:"det", en:"it / that", pos:"pron", example:"Det er kaldt ute.", example_en:"It is cold outside." }
-];
+import { WORDS } from "./words.js";
 
-/* --- STATE --- */
-const STORAGE_KEY = 'norsk_app_v2';
+const STORAGE_KEY = 'norsk_app_v3';
 
 const DEFAULTS = {
   cards: {},
@@ -27,9 +20,10 @@ let state = loadState();
 
 function loadState() {
   try {
-    return Object.assign({}, DEFAULTS, JSON.parse(localStorage.getItem(STORAGE_KEY)));
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    return Object.assign({}, DEFAULTS, saved || {}, { cards: (saved && saved.cards) || {} });
   } catch {
-    return { ...DEFAULTS };
+    return { ...DEFAULTS, cards: {} };
   }
 }
 
@@ -38,34 +32,76 @@ function saveState() {
 }
 
 function todayStr() {
-  return new Date().toISOString().slice(0,10);
+  const d = new Date();
+  return d.toISOString().slice(0, 10);
+}
+
+function addDays(dateStr, days) {
+  const d = new Date(dateStr + "T00:00:00");
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+function checkDayRollover() {
+  const today = todayStr();
+
+  if (state.todayDate !== today) {
+    if (state.lastStudy) {
+      const yesterday = addDays(today, -1);
+      if (state.lastStudy !== today && state.lastStudy !== yesterday) {
+        state.streak = 0;
+      }
+    }
+
+    state.todayDate = today;
+    state.todayReviews = 0;
+    saveState();
+  }
 }
 
 /* --- SRS --- */
 function initCard() {
-  return { ef: 2.5, reps: 0, interval: 0, due: todayStr(), seen: false };
+  return {
+    ef: 2.5,
+    reps: 0,
+    interval: 0,
+    due: todayStr(),
+    seen: false,
+    lapses: 0
+  };
 }
 
 function gradeCard(idx, rating) {
   const c = state.cards[idx] || initCard();
 
+  c.seen = true;
+
   if (rating === 1) {
     c.reps = 0;
     c.interval = 0;
+    c.lapses += 1;
+    c.ef = Math.max(1.3, c.ef - 0.2);
     c.due = todayStr();
   } else {
-    c.reps++;
-    c.interval = c.reps === 1 ? 1 : Math.round(c.interval * c.ef);
-    c.ef = Math.max(1.3, c.ef + 0.1);
-    c.due = todayStr();
+    if (c.reps === 0) {
+      c.interval = rating === 2 ? 1 : rating === 3 ? 2 : 4;
+    } else if (c.reps === 1) {
+      c.interval = rating === 2 ? 2 : rating === 3 ? 4 : 7;
+    } else {
+      const mult = rating === 2 ? 1.2 : rating === 3 ? c.ef : c.ef * 1.3;
+      c.interval = Math.max(1, Math.round(c.interval * mult));
+    }
+
+    c.reps += 1;
+    c.ef = Math.max(1.3, c.ef + (rating === 4 ? 0.15 : rating === 3 ? 0.05 : 0));
+    c.due = addDays(todayStr(), c.interval);
   }
 
-  c.seen = true;
   state.cards[idx] = c;
+  state.todayReviews += 1;
 
-  state.todayReviews++;
   if (state.lastStudy !== todayStr()) {
-    state.streak++;
+    state.streak += 1;
     state.lastStudy = todayStr();
   }
 
@@ -74,25 +110,51 @@ function gradeCard(idx, rating) {
 
 /* --- QUEUE --- */
 function getQueue() {
-  const queue = [];
+  const today = todayStr();
+  const due = [];
+  const fresh = [];
 
   for (let i = 0; i < WORDS.length; i++) {
-    if (!state.cards[i]) queue.push(i);
+    const c = state.cards[i];
+
+    if (c && c.seen && c.due <= today) {
+      due.push(i);
+    } else if (!c || !c.seen) {
+      fresh.push(i);
+    }
   }
 
-  return queue.slice(0, state.dailyNew);
+  return [...due, ...fresh.slice(0, state.dailyNew)];
 }
 
 /* --- UI --- */
-let queue = getQueue();
+let queue = [];
 let currentIdx = null;
 let isFlipped = false;
 let revealedByGiveUp = false;
 
+function normalizeAnswer(str) {
+  return str
+    .toLowerCase()
+    .trim()
+    .replace(/[.,!?;:()]/g, "")
+    .replace(/\s+/g, " ");
+}
+
+function acceptedAnswers(answer) {
+  return answer
+    .split("/")
+    .map(s => normalizeAnswer(s))
+    .filter(Boolean);
+}
+
 /* --- RENDER --- */
 function renderCard() {
+  queue = getQueue();
+
   if (queue.length === 0) {
     document.getElementById('card-container').innerHTML = "<p>Done for today</p>";
+    document.getElementById('ratings').classList.remove('visible');
     return;
   }
 
@@ -102,7 +164,6 @@ function renderCard() {
 
   const w = WORDS[currentIdx];
   const dir = state.direction;
-
   const prompt = dir === 'no-en' ? w.no : w.en;
   const answer = dir === 'no-en' ? w.en : w.no;
 
@@ -113,7 +174,7 @@ function renderCard() {
           <div class="card-center">
             <h1>${prompt}</h1>
 
-            <input id="input" placeholder="Type answer..." />
+            <input id="input" placeholder="Type answer..." autocomplete="off" spellcheck="false" />
             <button id="check">Check</button>
             <button id="skip">I don't know</button>
 
@@ -132,23 +193,34 @@ function renderCard() {
     </div>
   `;
 
+  const input = document.getElementById('input');
+  const feedback = document.getElementById('feedback');
+
   document.getElementById('check').onclick = () => {
-    const val = document.getElementById('input').value.toLowerCase().trim();
+    const val = normalizeAnswer(input.value);
     if (!val) return;
 
-    if (val === answer.toLowerCase()) {
-      document.getElementById('feedback').innerText = "Correct";
-    } else {
-      document.getElementById('feedback').innerText = "Answer: " + answer;
-    }
+    const possible = acceptedAnswers(answer);
+    const correct = possible.includes(val);
 
+    feedback.innerText = correct ? "Correct" : "Answer: " + answer;
     flipCard();
   };
 
   document.getElementById('skip').onclick = () => {
     revealedByGiveUp = true;
+    feedback.innerText = "";
     flipCard();
   };
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      document.getElementById('check').click();
+    }
+  });
+
+  setTimeout(() => input.focus(), 50);
 }
 
 function flipCard() {
@@ -160,18 +232,17 @@ function flipCard() {
 /* --- RATINGS --- */
 document.querySelectorAll('.rate-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    if (!isFlipped) return;
+    if (!isFlipped || currentIdx === null) return;
 
-    let rating = parseInt(btn.dataset.rate);
+    let rating = parseInt(btn.dataset.rate, 10);
 
     if (revealedByGiveUp) rating = 1;
 
     gradeCard(currentIdx, rating);
-
-    queue.shift();
     renderCard();
   });
 });
 
 /* --- INIT --- */
+checkDayRollover();
 renderCard();

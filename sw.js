@@ -1,5 +1,5 @@
 /* Norsk - minimal service worker for offline support */
-const CACHE = 'norsk-v4';
+const CACHE = 'norsk-v5';
 const ASSETS = [
   './',
   './index.html',

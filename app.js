@@ -4,7 +4,7 @@
 
 import { WORDS } from "./words.js";
 
-const STORAGE_KEY = "norsk_app_v4";
+const STORAGE_KEY = "norsk_app_v5";
 
 const DEFAULTS = {
   cards: {},
@@ -14,7 +14,7 @@ const DEFAULTS = {
   todayDate: null,
   dailyNew: 10,
   direction: "no-en",
-  autoDirection: true
+  autoDirection: false
 };
 
 let state = loadState();
@@ -320,17 +320,22 @@ function getDirectionForCard(idx) {
   return Math.random() < 0.5 ? "no-en" : "en-no";
 }
 
-function getCardMode(idx) {
-  const modes = ["typing", "multiple", "cloze", "sentence"];
+function getCardMode(idx, dir) {
   const c = state.cards[idx] || initCard();
 
   if (!c.seen) return "typing";
   if ((c.correctCount || 0) < 2) return "multiple";
 
+  if (dir === "en-no") {
+    const modes = ["typing", "multiple", "cloze", "sentence"];
+    return modes[Math.floor(Math.random() * modes.length)];
+  }
+
+  const modes = ["typing", "multiple"];
   return modes[Math.floor(Math.random() * modes.length)];
 }
 
-function buildMultipleChoiceOptions(answer, w) {
+function buildMultipleChoiceOptions(answer, w, dir) {
   const pool = new Set([answer]);
 
   if (w.confusions) {
@@ -339,7 +344,7 @@ function buildMultipleChoiceOptions(answer, w) {
 
   while (pool.size < 4) {
     const random = WORDS[Math.floor(Math.random() * WORDS.length)];
-    pool.add(random.en);
+    pool.add(dir === "no-en" ? random.en : random.no);
   }
 
   return [...pool].sort(() => Math.random() - 0.5);
@@ -372,7 +377,7 @@ function renderAnswerFeedback(isCorrect, answer, w) {
   `;
 }
 
-function renderPromptContent(w, prompt, answer, mode) {
+function renderPromptContent(w, prompt, answer, mode, dir) {
   if (mode === "typing") {
     return `
       <input id="input" class="recall-input" placeholder="Type answer..." autocomplete="off" spellcheck="false" />
@@ -385,7 +390,7 @@ function renderPromptContent(w, prompt, answer, mode) {
   }
 
   if (mode === "multiple") {
-    const options = buildMultipleChoiceOptions(answer, w);
+    const options = buildMultipleChoiceOptions(answer, w, dir);
     return `
       <div class="mc-options recall-actions">
         ${options.map(opt => `<button class="mc-btn recall-btn secondary" data-answer="${opt}">${opt}</button>`).join("")}
@@ -515,11 +520,11 @@ function renderCard() {
   const dir = state.autoDirection ? getDirectionForCard(currentIdx) : state.direction;
   const prompt = dir === "no-en" ? w.no : w.en;
   const answer = dir === "no-en" ? w.en : w.no;
-  const mode = getCardMode(currentIdx);
+  const mode = getCardMode(currentIdx, dir);
   const targetAnswer = mode === "cloze"
     ? (w.cloze_answer || w.no)
     : answer;
-  const promptContent = renderPromptContent(w, prompt, answer, mode);
+  const promptContent = renderPromptContent(w, prompt, answer, mode, dir);
 
   document.getElementById("card-container").innerHTML = `
     <div class="card-wrap">

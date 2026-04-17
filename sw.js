@@ -1,9 +1,12 @@
 /* Norsk - minimal service worker for offline support */
-const CACHE = 'norsk-v2';
+const CACHE = 'norsk-v4';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
+  './styles.css',
+  './app.js',
+  './words.js',
   './icon-192.png',
   './icon-512.png'
 ];

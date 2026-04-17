@@ -1,6 +1,22 @@
 export const WORDS = [
-  { no: "som", en: "as / which / who", pos: "conj", example: "Mannen som står der.", example_en: "The man who stands there." },
-  { no: "jeg", en: "I", pos: "pron", example: "Jeg er trøtt.", example_en: "I am tired." },
+  {
+    no: "som",
+    en: "as / which / who",
+    pos: "conj",
+    examples: [
+      { no: "Mannen som står der.", en: "The man who stands there." },
+      { no: "Boken som jeg leste, var god.", en: "The book that I read was good." }
+    ]
+  },
+  {
+    no: "jeg",
+    en: "I",
+    pos: "pron",
+    examples: [
+      { no: "Jeg er trøtt.", en: "I am tired." },
+      { no: "Jeg lærer norsk.", en: "I am learning Norwegian." }
+    ]
+  },
   { no: "hans", en: "his", pos: "pron", example: "Det er hans bok.", example_en: "That is his book." },
   { no: "at", en: "that", pos: "conj", example: "Jeg vet at du kommer.", example_en: "I know that you are coming." },
   { no: "han", en: "he", pos: "pron", example: "Han er lærer.", example_en: "He is a teacher." },
@@ -13,15 +29,70 @@ export const WORDS = [
   { no: "være", en: "to be", pos: "verb", example: "Å være glad er viktig.", example_en: "To be happy is important." },
   { no: "ett", en: "one", pos: "num", example: "Jeg har ett spørsmål.", example_en: "I have one question." },
   { no: "har", en: "have / has", pos: "verb", example: "Jeg har en bil.", example_en: "I have a car." },
-  { no: "dette", en: "this", pos: "pron", example: "Dette er bra.", example_en: "This is good." },
+
+  {
+    no: "dette",
+    en: "this",
+    pos: "pron",
+    examples: [
+      { no: "Dette er bra.", en: "This is good." },
+      { no: "Dette huset er gammelt.", en: "This house is old." }
+    ]
+  },
+
   { no: "fra", en: "from", pos: "prep", example: "Jeg er fra Norge.", example_en: "I am from Norway." },
   { no: "etter", en: "after", pos: "prep", example: "Etter jobb drar jeg hjem.", example_en: "After work I go home." },
   { no: "varm", en: "warm", pos: "adj", example: "Maten er varm.", example_en: "The food is warm." },
   { no: "ordet", en: "the word", pos: "noun", example: "Jeg forstår ordet.", example_en: "I understand the word." },
-  { no: "men", en: "but", pos: "conj", example: "Jeg vil, men kan ikke.", example_en: "I want to, but can't." },
-  { no: "hva", en: "what", pos: "pron", example: "Hva gjør du?", example_en: "What are you doing?" },
-  { no: "noen", en: "someone / some", pos: "pron", example: "Noen ringer.", example_en: "Someone is calling." },
-  { no: "den", en: "that / it", pos: "pron", example: "Den er fin.", example_en: "It is nice." },
+
+  {
+    no: "men",
+    en: "but",
+    pos: "conj",
+    examples: [
+      { no: "Jeg vil, men kan ikke.", en: "I want to, but I can't." },
+      { no: "Han prøvde, men det var vanskelig.", en: "He tried, but it was difficult." }
+    ],
+    cloze_no: "Jeg vil, ____ kan ikke.",
+    cloze_answer: "men"
+  },
+
+  {
+    no: "hva",
+    en: "what",
+    pos: "pron",
+    examples: [
+      { no: "Hva gjør du?", en: "What are you doing?" },
+      { no: "Hva heter du?", en: "What is your name?" }
+    ],
+    cloze_no: "____ gjør du?",
+    cloze_answer: "Hva"
+  },
+
+  {
+    no: "noen",
+    en: "someone / some",
+    pos: "pron",
+    examples: [
+      { no: "Noen ringer.", en: "Someone is calling." },
+      { no: "Jeg kjenner noen der.", en: "I know someone there." }
+    ],
+    confusions: ["noe"]
+  },
+
+  {
+    no: "den",
+    en: "that / it",
+    pos: "pron",
+    examples: [
+      { no: "Den er fin.", en: "It is nice." },
+      { no: "Den bilen er stor.", en: "That car is big." }
+    ],
+    cloze_no: "____ er fin.",
+    cloze_answer: "Den",
+    confusions: ["det", "de"]
+  },
+
   { no: "du", en: "you", pos: "pron", example: "Hvor er du?", example_en: "Where are you?" },
   { no: "eller", en: "or", pos: "conj", example: "Te eller kaffe?", example_en: "Tea or coffee?" },
   { no: "hadde", en: "had", pos: "verb", example: "Jeg hadde en hund.", example_en: "I had a dog." },
@@ -217,7 +288,7 @@ export const WORDS = [
   { no: "barn", en: "child / children", pos: "noun", example: "Barn leker ute.", example_en: "Children are playing outside." },
   { no: "begynne", en: "to begin", pos: "verb", example: "La oss begynne nå.", example_en: "Let us begin now." },
   { no: "fikk", en: "got / received", pos: "verb", example: "Jeg fikk en melding.", example_en: "I got a message." },
-  { no: "eksempel", en: "example", pos: "noun", example: "Kan du gi et eksempel?", example_en: "Can you give an example?" },
+  { no: "eksempel", en: "example", pos: "noun", example: "Kan du gi et eksempel?", example_en: "Can you give an example." },
   { no: "lette", en: "light / easy", pos: "adj", example: "Dette er en lett oppgave.", example_en: "This is an easy task." },
   { no: "papir", en: "paper", pos: "noun", example: "Skriv det på papir.", example_en: "Write it on paper." },
   { no: "gruppe", en: "group", pos: "noun", example: "Vi jobber i en gruppe.", example_en: "We work in a group." },
@@ -434,5 +505,35 @@ export const WORDS = [
   { no: "sommer", en: "summer", pos: "noun", example: "Jeg elsker sommer.", example_en: "I love summer." },
   { no: "tog", en: "train", pos: "noun", example: "Toget går nå.", example_en: "The train leaves now." },
   { no: "søvn", en: "sleep", pos: "noun", example: "Jeg trenger søvn.", example_en: "I need sleep." },
-  { no: "bevise", en: "to prove", pos: "verb", example: "Han vil bevise det.", example_en: "He wants to prove it." }
+  { no: "bevise", en: "to prove", pos: "verb", example: "Han vil bevise det.", example_en: "He wants to prove it." },
+
+  {
+    no: "det",
+    en: "it / that",
+    pos: "pron",
+    examples: [
+      { no: "Det er kaldt ute.", en: "It is cold outside." },
+      { no: "Det er sant.", en: "That is true." },
+      { no: "Det går bra.", en: "It is going well." }
+    ],
+    confusions: ["den", "de"]
+  },
+  {
+    no: "det går bra",
+    en: "it is going well",
+    pos: "phrase",
+    examples: [
+      { no: "Når noen spør, kan du si: det går bra.", en: "When someone asks, you can say: it is going well." },
+      { no: "Alt går bra nå.", en: "Everything is going well now." }
+    ]
+  },
+  {
+    no: "hva gjør du",
+    en: "what are you doing",
+    pos: "phrase",
+    examples: [
+      { no: "Hei, hva gjør du?", en: "Hi, what are you doing?" },
+      { no: "Jeg spør bare: hva gjør du?", en: "I am just asking: what are you doing?" }
+    ]
+  }
 ];

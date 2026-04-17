@@ -86,12 +86,21 @@
       <div class="screen" id="screen-stats">
         <div class="stats-section">
           <div class="stats-heading">Your progress <em>·</em></div>
-          <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+
           <div class="stat-row"><span>Words seen</span><span id="prog-seen">0</span></div>
           <div class="stat-row"><span>Words known</span><span id="prog-known">0</span></div>
           <div class="stat-row"><span>Words in total</span><span id="prog-total">0</span></div>
           <div class="stat-row"><span>Reviews today</span><span id="prog-today">0</span></div>
           <div class="stat-row"><span>Current streak</span><span id="prog-streak">0 days</span></div>
+          <div class="stat-row"><span>Retention</span><span id="retentionPct">0%</span></div>
+        </div>
+
+        <div class="stats-section">
+          <div class="stats-heading">Hardest words <em>·</em></div>
+          <div id="hardestWords"></div>
         </div>
 
         <div class="stats-section">
@@ -120,6 +129,7 @@
   </div>
 
   <div class="toast" id="toast"></div>
+
   <script type="module" src="app.js"></script>
 </body>
 </html>

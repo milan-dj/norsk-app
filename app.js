@@ -632,12 +632,6 @@ function flipCard() {
   if (cardEl) cardEl.classList.add("flipped");
   document.getElementById("ratings").classList.add("visible");
   isFlipped = true;
-
-  // Auto-speak the Norwegian word on flip
-  if (currentIdx !== null) {
-    const w = WORDS[currentIdx];
-    speak(w.no);
-  }
 }
 
 function drawNext() {

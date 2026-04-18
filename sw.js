@@ -1,5 +1,4 @@
-/* Norsk - minimal service worker for offline support */
-const CACHE = 'norsk-v5';
+const CACHE = 'norsk-v6';
 const ASSETS = [
   './',
   './index.html',
@@ -31,6 +30,17 @@ self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
   e.respondWith(
     caches.match(e.request).then((cached) => {
+      // Network-first for HTML (to pick up updates), cache-first for assets
+      const isNav = e.request.mode === 'navigate' || e.request.url.endsWith('.html');
+      if (isNav) {
+        return fetch(e.request)
+          .then((resp) => {
+            const copy = resp.clone();
+            caches.open(CACHE).then((c) => c.put(e.request, copy)).catch(() => {});
+            return resp;
+          })
+          .catch(() => cached);
+      }
       return (
         cached ||
         fetch(e.request)

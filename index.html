@@ -13,7 +13,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..900,0..100,0..1&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..800;1,6..72,300..800&family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -21,10 +21,15 @@
 
     <header>
       <div class="brand">Norsk<em>.</em></div>
-      <div class="meta" id="dateMeta">—</div>
+      <div class="header-right">
+        <button class="theme-toggle" id="themeToggle" title="Toggle dark mode" aria-label="Toggle dark mode">
+          <span class="theme-icon" id="themeIcon">☽</span>
+        </button>
+        <div class="meta" id="dateMeta">—</div>
+      </div>
     </header>
 
-    <section class="stats">
+    <section class="stats-bar">
       <div class="stat">
         <div class="stat-num" id="stat-due">0</div>
         <div class="stat-label">Due</div>
@@ -44,10 +49,12 @@
     </section>
 
     <main>
+      <!-- STUDY -->
       <div class="screen active" id="screen-study">
         <div class="direction">
-          <button class="dir-btn active" data-dir="no-en">Norsk → Engelsk</button>
-          <button class="dir-btn" data-dir="en-no">Engelsk → Norsk</button>
+          <button class="dir-btn active" data-dir="no-en">NO → EN</button>
+          <button class="dir-btn" data-dir="en-no">EN → NO</button>
+          <button class="dir-btn" data-dir="auto">Auto</button>
         </div>
 
         <div id="card-container"></div>
@@ -55,39 +62,53 @@
         <div class="ratings" id="ratings">
           <button class="rate-btn rate-1" data-rate="1">
             <div class="glyph">✕</div>
-            <div class="lbl">Again</div>
+            <div class="lbl">Again <kbd>1</kbd></div>
           </button>
           <button class="rate-btn rate-2" data-rate="2">
             <div class="glyph">~</div>
-            <div class="lbl">Hard</div>
+            <div class="lbl">Hard <kbd>2</kbd></div>
           </button>
           <button class="rate-btn rate-3" data-rate="3">
             <div class="glyph">✓</div>
-            <div class="lbl">Good</div>
+            <div class="lbl">Good <kbd>3</kbd></div>
           </button>
           <button class="rate-btn rate-4" data-rate="4">
             <div class="glyph">✓✓</div>
-            <div class="lbl">Easy</div>
+            <div class="lbl">Easy <kbd>4</kbd></div>
           </button>
+        </div>
+
+        <div class="keyboard-hint" id="keyboardHint">
+          <kbd>Space</kbd> flip · <kbd>1-4</kbd> rate · <kbd>Enter</kbd> check
         </div>
       </div>
 
+      <!-- BROWSE -->
       <div class="screen" id="screen-browse">
         <div class="stats-heading">Words <em>—</em> <span id="browseCount">0</span></div>
+        <div class="browse-search-wrap">
+          <input type="text" id="browseSearch" class="browse-search" placeholder="Search words..." autocomplete="off" spellcheck="false">
+        </div>
         <div class="browse-filter">
           <button class="chip active" data-filter="all">All</button>
           <button class="chip" data-filter="new">New</button>
           <button class="chip" data-filter="learning">Learning</button>
           <button class="chip" data-filter="known">Known</button>
+          <button class="chip chip-warn" data-filter="leech">Leeches</button>
         </div>
         <div class="word-list" id="wordList"></div>
       </div>
 
+      <!-- STATS -->
       <div class="screen" id="screen-stats">
         <div class="stats-section">
           <div class="stats-heading">Your progress <em>·</em></div>
-          <div class="progress-bar">
-            <div class="progress-fill" id="progressFill"></div>
+          <div class="progress-ring-wrap">
+            <svg class="progress-ring" viewBox="0 0 120 120">
+              <circle class="progress-ring-bg" cx="60" cy="60" r="52" />
+              <circle class="progress-ring-fill" id="progressRing" cx="60" cy="60" r="52" />
+            </svg>
+            <div class="progress-ring-label" id="progressLabel">0%</div>
           </div>
 
           <div class="stat-row"><span>Words seen</span><span id="prog-seen">0</span></div>
@@ -95,12 +116,17 @@
           <div class="stat-row"><span>Words in total</span><span id="prog-total">0</span></div>
           <div class="stat-row"><span>Reviews today</span><span id="prog-today">0</span></div>
           <div class="stat-row"><span>Current streak</span><span id="prog-streak">0 days</span></div>
-          <div class="stat-row"><span>Retention</span><span id="retentionPct">0%</span></div>
+          <div class="stat-row"><span>Retention rate</span><span id="retentionPct">0%</span></div>
         </div>
 
         <div class="stats-section">
           <div class="stats-heading">Hardest words <em>·</em></div>
           <div id="hardestWords"></div>
+        </div>
+
+        <div class="stats-section">
+          <div class="stats-heading">Activity <em>·</em></div>
+          <div class="heatmap-wrap" id="heatmap"></div>
         </div>
 
         <div class="stats-section">
@@ -114,11 +140,11 @@
 
     <nav>
       <button class="nav-btn active" data-screen="study">
-        <div class="nav-icon">A</div>
+        <div class="nav-icon">▲</div>
         <div class="nav-lbl">Study</div>
       </button>
       <button class="nav-btn" data-screen="browse">
-        <div class="nav-icon">≡</div>
+        <div class="nav-icon">☰</div>
         <div class="nav-lbl">Browse</div>
       </button>
       <button class="nav-btn" data-screen="stats">
@@ -129,7 +155,6 @@
   </div>
 
   <div class="toast" id="toast"></div>
-
   <script type="module" src="app.js"></script>
 </body>
 </html>

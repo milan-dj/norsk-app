@@ -474,7 +474,9 @@ function renderPromptContent(w, prompt, answer, mode, dir) {
 
 /* ==================== RENDER CARD ==================== */
 function renderCard() {
-  queue = getQueue();
+  if (queue.length === 0) {
+    queue = getQueue();
+  }
   const container = document.getElementById("card-container");
   const ratingsEl = document.getElementById("ratings");
 
@@ -542,7 +544,7 @@ function renderCard() {
           <div class="card-corner">${w.pos}</div>
           <div class="card-center">
             <div class="${dir === 'no-en' ? 'word-no' : 'word-en'}">${prompt}</div>
-            <div class="word-pos">${queue.length} remaining</div>
+            <div class="word-pos">${queue.length - 1} remaining</div>
             ${promptContent}
           </div>
         </div>
@@ -639,8 +641,13 @@ function flipCard() {
 }
 
 function drawNext() {
-  if (queue.length) queue.shift();
-  if (queue.length === 0) queue = getQueue();
+  queue.shift();
+
+  if (queue.length === 0) {
+    renderCard(); // will show "All done"
+    return;
+  }
+
   renderCard();
   refreshStats();
 }

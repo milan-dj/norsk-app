@@ -85,7 +85,10 @@
 
       <!-- BROWSE -->
       <div class="screen" id="screen-browse">
-        <div class="stats-heading">Words <em>—</em> <span id="browseCount">0</span></div>
+        <div class="browse-header">
+          <div class="stats-heading">Words <em>—</em> <span id="browseCount">0</span></div>
+          <button class="add-word-btn" id="addWordOpen" title="Add a word">+</button>
+        </div>
         <div class="browse-search-wrap">
           <input type="text" id="browseSearch" class="browse-search" placeholder="Search words..." autocomplete="off" spellcheck="false">
         </div>
@@ -95,8 +98,48 @@
           <button class="chip" data-filter="learning">Learning</button>
           <button class="chip" data-filter="known">Known</button>
           <button class="chip chip-warn" data-filter="leech">Leeches</button>
+          <button class="chip chip-custom" data-filter="custom">My words</button>
         </div>
         <div class="word-list" id="wordList"></div>
+      </div>
+
+      <!-- ADD WORD PANEL (slides up over browse) -->
+      <div class="add-word-overlay" id="addWordOverlay">
+        <div class="add-word-panel">
+          <div class="add-word-header">
+            <div class="stats-heading">Add a word <em>·</em></div>
+            <button class="add-word-close" id="addWordClose">✕</button>
+          </div>
+
+          <div class="add-word-form">
+            <label class="form-label">Norwegian word <span class="required">*</span></label>
+            <input type="text" id="addNo" class="form-input" placeholder="e.g. hyggelig" autocomplete="off" spellcheck="false">
+
+            <label class="form-label">English translation <span class="required">*</span></label>
+            <input type="text" id="addEn" class="form-input" placeholder="e.g. cozy / pleasant" autocomplete="off">
+
+            <label class="form-label">Part of speech</label>
+            <div class="pos-chips">
+              <button class="pos-chip" data-pos="noun">noun</button>
+              <button class="pos-chip" data-pos="verb">verb</button>
+              <button class="pos-chip" data-pos="adj">adj</button>
+              <button class="pos-chip" data-pos="adv">adv</button>
+              <button class="pos-chip" data-pos="prep">prep</button>
+              <button class="pos-chip" data-pos="conj">conj</button>
+              <button class="pos-chip" data-pos="pron">pron</button>
+              <button class="pos-chip" data-pos="phrase">phrase</button>
+            </div>
+
+            <label class="form-label">Example sentence (Norwegian)</label>
+            <input type="text" id="addExNo" class="form-input" placeholder="e.g. Det var en hyggelig kveld." autocomplete="off" spellcheck="false">
+
+            <label class="form-label">Example sentence (English)</label>
+            <input type="text" id="addExEn" class="form-input" placeholder="e.g. It was a pleasant evening." autocomplete="off">
+
+            <button class="form-submit" id="addWordSubmit">Add word</button>
+            <div class="form-feedback" id="addWordFeedback"></div>
+          </div>
+        </div>
       </div>
 
       <!-- STATS -->

@@ -1,13 +1,13 @@
 /* =========================================================
-   NORSK · App Logic v6
-   New: audio, keyboard shortcuts, swipe, dark mode, heatmap,
-        leech detection, session summary, search, card flash
+   NORSK · App Logic v7
+   New: custom word adding, delete custom words
 ========================================================= */
 
-import { WORDS } from "./words.js";
+import { WORDS as BUILTIN_WORDS } from "./words.js";
 
 const STORAGE_KEY = "norsk_app_v6";
-const LEECH_THRESHOLD = 5; // lapses before marking as leech
+const CUSTOM_WORDS_KEY = "norsk_custom_words";
+const LEECH_THRESHOLD = 5;
 
 const DEFAULTS = {
   cards: {},
@@ -20,8 +20,37 @@ const DEFAULTS = {
   dailyNew: 10,
   direction: "no-en",
   darkMode: false,
-  dailyHistory: {} // { "2026-04-18": 5 }
+  dailyHistory: {}
 };
+
+/* --- Custom words stored separately so they survive progress resets --- */
+function loadCustomWords() {
+  try {
+    return JSON.parse(localStorage.getItem(CUSTOM_WORDS_KEY)) || [];
+  } catch { return []; }
+}
+function saveCustomWords(words) {
+  localStorage.setItem(CUSTOM_WORDS_KEY, JSON.stringify(words));
+}
+
+let customWords = loadCustomWords();
+
+// Merged word list: built-in + custom. Custom words start after built-in indices.
+function getAllWords() {
+  return [...BUILTIN_WORDS, ...customWords];
+}
+// Helper: is index a custom word?
+function isCustomIndex(idx) {
+  return idx >= BUILTIN_WORDS.length;
+}
+
+// Use this everywhere instead of WORDS directly
+let WORDS = getAllWords();
+
+function refreshWordList() {
+  customWords = loadCustomWords();
+  WORDS = getAllWords();
+}
 
 let state = loadState();
 let queue = [];
@@ -474,9 +503,7 @@ function renderPromptContent(w, prompt, answer, mode, dir) {
 
 /* ==================== RENDER CARD ==================== */
 function renderCard() {
-  if (queue.length === 0) {
-    queue = getQueue();
-  }
+  queue = getQueue();
   const container = document.getElementById("card-container");
   const ratingsEl = document.getElementById("ratings");
 
@@ -544,7 +571,7 @@ function renderCard() {
           <div class="card-corner">${w.pos}</div>
           <div class="card-center">
             <div class="${dir === 'no-en' ? 'word-no' : 'word-en'}">${prompt}</div>
-            <div class="word-pos">${queue.length - 1} remaining</div>
+            <div class="word-pos">${queue.length} remaining</div>
             ${promptContent}
           </div>
         </div>
@@ -632,16 +659,17 @@ function flipCard() {
   if (cardEl) cardEl.classList.add("flipped");
   document.getElementById("ratings").classList.add("visible");
   isFlipped = true;
+
+  // Auto-speak the Norwegian word on flip
+  if (currentIdx !== null) {
+    const w = WORDS[currentIdx];
+    speak(w.no);
+  }
 }
 
 function drawNext() {
-  queue.shift();
-
-  if (queue.length === 0) {
-    renderCard(); // will show "All done"
-    return;
-  }
-
+  if (queue.length) queue.shift();
+  if (queue.length === 0) queue = getQueue();
   renderCard();
   refreshStats();
 }
@@ -764,7 +792,7 @@ function renderBrowseList() {
 
   let items = WORDS.map((w, idx) => {
     const c = getCardState(idx);
-    return { ...w, idx, card: c };
+    return { ...w, idx, card: c, custom: isCustomIndex(idx) };
   });
 
   // Filter by status
@@ -772,6 +800,7 @@ function renderBrowseList() {
   else if (browseFilter === "learning") items = items.filter(i => isLearningCard(i.card));
   else if (browseFilter === "known") items = items.filter(i => isKnownCard(i.card));
   else if (browseFilter === "leech") items = items.filter(i => isLeech(i.card));
+  else if (browseFilter === "custom") items = items.filter(i => i.custom);
 
   // Filter by search
   if (browseQuery) {
@@ -791,17 +820,154 @@ function renderBrowseList() {
         else if (isKnownCard(item.card)) dotClass = "known";
         else if (isLearningCard(item.card)) dotClass = "learning";
         const leechBadge = isLeech(item.card) ? '<span class="word-item-badge">LEECH</span>' : '';
+        const customBadge = item.custom ? '<span class="word-item-custom">MY</span>' : '';
+        const deleteBtn = item.custom
+          ? `<button class="word-item-delete" data-delete-idx="${item.idx}" title="Delete word">✕</button>`
+          : '';
         return `
           <div class="word-item">
             <div>
               <span class="word-item-dot ${dotClass}"></span>
               <span class="word-item-no">${item.no}</span>
-              ${leechBadge}
+              ${leechBadge}${customBadge}
             </div>
-            <div class="word-item-en">${item.en}</div>
+            <div style="display:flex;align-items:baseline;">
+              <span class="word-item-en">${item.en}</span>
+              ${deleteBtn}
+            </div>
           </div>`;
       }).join("");
+
+  // Wire delete buttons
+  listEl.querySelectorAll(".word-item-delete").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const idx = parseInt(btn.dataset.deleteIdx, 10);
+      deleteCustomWord(idx);
+    });
+  });
 }
+
+/* ==================== CUSTOM WORD MANAGEMENT ==================== */
+function addCustomWord(word) {
+  customWords.push(word);
+  saveCustomWords(customWords);
+  WORDS = getAllWords();
+}
+
+function deleteCustomWord(globalIdx) {
+  const localIdx = globalIdx - BUILTIN_WORDS.length;
+  if (localIdx < 0 || localIdx >= customWords.length) return;
+
+  const w = customWords[localIdx];
+  if (!confirm(`Delete "${w.no}"?`)) return;
+
+  // Remove the word
+  customWords.splice(localIdx, 1);
+  saveCustomWords(customWords);
+
+  // Clean up card state: remove this card and shift all custom indices above it
+  const newCards = {};
+  for (const [key, val] of Object.entries(state.cards)) {
+    const k = parseInt(key, 10);
+    if (k === globalIdx) continue; // skip deleted
+    if (k > globalIdx) {
+      newCards[k - 1] = val; // shift down
+    } else {
+      newCards[k] = val;
+    }
+  }
+  state.cards = newCards;
+  saveState();
+
+  WORDS = getAllWords();
+  renderBrowseList();
+  refreshStats();
+  showToast(`Deleted "${w.no}"`);
+}
+
+/* ==================== ADD WORD FORM ==================== */
+let addWordPos = "";
+
+document.getElementById("addWordOpen")?.addEventListener("click", () => {
+  document.getElementById("addWordOverlay").classList.add("open");
+  setTimeout(() => document.getElementById("addNo")?.focus(), 350);
+});
+
+document.getElementById("addWordClose")?.addEventListener("click", closeAddWord);
+
+document.getElementById("addWordOverlay")?.addEventListener("click", (e) => {
+  if (e.target === e.currentTarget) closeAddWord();
+});
+
+function closeAddWord() {
+  document.getElementById("addWordOverlay").classList.remove("open");
+}
+
+// POS chip selection
+document.querySelectorAll(".pos-chip").forEach(chip => {
+  chip.addEventListener("click", () => {
+    document.querySelectorAll(".pos-chip").forEach(c => c.classList.remove("active"));
+    if (addWordPos === chip.dataset.pos) {
+      addWordPos = ""; // toggle off
+    } else {
+      chip.classList.add("active");
+      addWordPos = chip.dataset.pos;
+    }
+  });
+});
+
+document.getElementById("addWordSubmit")?.addEventListener("click", () => {
+  const no = document.getElementById("addNo").value.trim();
+  const en = document.getElementById("addEn").value.trim();
+  const exNo = document.getElementById("addExNo").value.trim();
+  const exEn = document.getElementById("addExEn").value.trim();
+  const feedback = document.getElementById("addWordFeedback");
+
+  if (!no || !en) {
+    if (feedback) { feedback.textContent = "Norwegian word and English translation are required."; feedback.style.color = "var(--coral)"; }
+    return;
+  }
+
+  // Check for duplicates
+  const exists = WORDS.some(w => w.no.toLowerCase() === no.toLowerCase());
+  if (exists) {
+    if (feedback) { feedback.textContent = `"${no}" is already in your word list.`; feedback.style.color = "var(--coral)"; }
+    return;
+  }
+
+  const word = {
+    no: no,
+    en: en,
+    pos: addWordPos || "noun",
+    example: exNo || "",
+    example_en: exEn || ""
+  };
+
+  // If examples provided, use the examples array format too
+  if (exNo || exEn) {
+    word.examples = [{ no: exNo, en: exEn }];
+  }
+
+  addCustomWord(word);
+
+  // Clear form
+  document.getElementById("addNo").value = "";
+  document.getElementById("addEn").value = "";
+  document.getElementById("addExNo").value = "";
+  document.getElementById("addExEn").value = "";
+  document.querySelectorAll(".pos-chip").forEach(c => c.classList.remove("active"));
+  addWordPos = "";
+
+  if (feedback) {
+    feedback.textContent = `✓ Added "${no}" — it will appear in your next study session.`;
+    feedback.style.color = "var(--sage)";
+  }
+
+  renderBrowseList();
+  refreshStats();
+  showToast(`Added "${no}"`);
+});
 
 /* ==================== SETTINGS ==================== */
 document.getElementById("adjust-new")?.addEventListener("click", () => {
@@ -817,20 +983,19 @@ document.getElementById("adjust-new")?.addEventListener("click", () => {
 });
 
 document.getElementById("reset-progress")?.addEventListener("click", () => {
-  if (confirm("Reset ALL progress and streak? This cannot be undone.")) {
+  if (confirm("Reset ALL progress and streak? This cannot be undone.\n\nNote: your custom words will be kept.")) {
     state = { ...DEFAULTS, cards: {}, dailyHistory: {} };
     saveState();
     refreshStats();
     renderCard();
     renderBrowseList();
     renderStatsScreen();
-    showToast("Progress reset");
+    showToast("Progress reset (custom words kept)");
   }
 });
 
 /* ==================== INIT ==================== */
 applyTheme();
-// Restore direction button state
 document.querySelectorAll(".dir-btn").forEach(b => {
   b.classList.toggle("active", b.dataset.dir === state.direction);
 });

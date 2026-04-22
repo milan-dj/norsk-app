@@ -178,6 +178,15 @@
           <button class="settings-btn" id="adjust-new">Adjust daily target</button>
           <button class="settings-btn danger" id="reset-progress">Reset all progress</button>
         </div>
+
+        <div class="stats-section">
+          <div class="stats-heading">Data <em>·</em></div>
+          <p class="data-note">Export saves your custom words and all progress. Import restores them on any device.</p>
+          <button class="settings-btn" id="exportData">↓ Export all data</button>
+          <button class="settings-btn" id="importData">↑ Import data</button>
+          <input type="file" id="importFile" accept=".json" style="display:none">
+          <div class="stat-row"><span>Custom words</span><span id="customWordCount">0</span></div>
+        </div>
       </div>
     </main>
 

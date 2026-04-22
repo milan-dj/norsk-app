@@ -883,6 +883,7 @@ function deleteCustomWord(globalIdx) {
   WORDS = getAllWords();
   renderBrowseList();
   refreshStats();
+  setText("customWordCount", customWords.length);
   showToast(`Deleted "${w.no}"`);
 }
 
@@ -966,6 +967,7 @@ document.getElementById("addWordSubmit")?.addEventListener("click", () => {
 
   renderBrowseList();
   refreshStats();
+  setText("customWordCount", customWords.length);
   showToast(`Added "${no}"`);
 });
 
@@ -994,6 +996,97 @@ document.getElementById("reset-progress")?.addEventListener("click", () => {
   }
 });
 
+/* ==================== EXPORT / IMPORT ==================== */
+document.getElementById("exportData")?.addEventListener("click", () => {
+  const exportPayload = {
+    version: 2,
+    exportDate: new Date().toISOString(),
+    progress: state,
+    customWords: customWords
+  };
+
+  const blob = new Blob([JSON.stringify(exportPayload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `norsk-backup-${todayStr()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  showToast("Data exported");
+});
+
+document.getElementById("importData")?.addEventListener("click", () => {
+  document.getElementById("importFile")?.click();
+});
+
+document.getElementById("importFile")?.addEventListener("change", (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    try {
+      const data = JSON.parse(evt.target.result);
+
+      if (!data.version) {
+        showToast("Invalid backup file");
+        return;
+      }
+
+      // Determine what to import
+      const hasProgress = data.progress && typeof data.progress === "object";
+      const hasCustom = Array.isArray(data.customWords) && data.customWords.length > 0;
+
+      if (!hasProgress && !hasCustom) {
+        showToast("No data found in file");
+        return;
+      }
+
+      let msg = "Import will restore:";
+      if (hasProgress) msg += `\n• Progress (${Object.keys(data.progress.cards || {}).length} card states, ${data.progress.streak || 0}-day streak)`;
+      if (hasCustom) msg += `\n• ${data.customWords.length} custom word${data.customWords.length === 1 ? "" : "s"}`;
+      msg += "\n\nThis will REPLACE your current data. Continue?";
+
+      if (!confirm(msg)) return;
+
+      // Import progress
+      if (hasProgress) {
+        state = Object.assign({}, DEFAULTS, data.progress, {
+          cards: data.progress.cards || {},
+          dailyHistory: data.progress.dailyHistory || {}
+        });
+        saveState();
+      }
+
+      // Import custom words — merge or replace
+      if (hasCustom) {
+        // Replace entirely to keep indices consistent with imported progress
+        customWords = data.customWords;
+        saveCustomWords(customWords);
+        WORDS = getAllWords();
+      }
+
+      // Refresh everything
+      refreshStats();
+      renderCard();
+      renderBrowseList();
+      renderStatsScreen();
+      showToast(`Imported ${hasCustom ? data.customWords.length + " custom words + " : ""}progress`);
+
+    } catch (err) {
+      console.error("Import error:", err);
+      showToast("Failed to read file — is it a valid backup?");
+    }
+  };
+
+  reader.readAsText(file);
+  // Reset the input so the same file can be selected again
+  e.target.value = "";
+});
+
 /* ==================== INIT ==================== */
 applyTheme();
 document.querySelectorAll(".dir-btn").forEach(b => {
@@ -1006,3 +1099,6 @@ refreshStats();
 renderStatsScreen();
 renderBrowseList();
 showScreen("study");
+
+// Show custom word count in stats
+setText("customWordCount", customWords.length);

@@ -1,4 +1,4 @@
-const CACHE = 'norsk-v6';
+const CACHE = 'norsk-v7';
 const ASSETS = [
   './',
   './index.html',

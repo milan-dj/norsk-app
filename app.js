@@ -997,25 +997,65 @@ document.getElementById("reset-progress")?.addEventListener("click", () => {
 });
 
 /* ==================== EXPORT / IMPORT ==================== */
-document.getElementById("exportData")?.addEventListener("click", () => {
-  const exportPayload = {
-    version: 2,
-    exportDate: new Date().toISOString(),
-    progress: state,
-    customWords: customWords
-  };
 
-  const blob = new Blob([JSON.stringify(exportPayload, null, 2)], { type: "application/json" });
+function wordToJS(w) {
+  // Format a word object exactly like words.js entries
+  const lines = [];
+  lines.push(`  {`);
+  lines.push(`    no: ${JSON.stringify(w.no)},`);
+  lines.push(`    en: ${JSON.stringify(w.en)},`);
+  lines.push(`    pos: ${JSON.stringify(w.pos || "noun")},`);
+
+  // Use examples array if present, otherwise fall back to example/example_en
+  const examples = w.examples || (w.example ? [{ no: w.example, en: w.example_en || "" }] : []);
+  if (examples.length > 0) {
+    lines.push(`    examples: [`);
+    examples.forEach((ex, i) => {
+      const comma = i < examples.length - 1 ? "," : "";
+      lines.push(`      { no: ${JSON.stringify(ex.no || "")}, en: ${JSON.stringify(ex.en || "")} }${comma}`);
+    });
+    lines.push(`    ]`);
+  }
+
+  // Include cloze fields if present
+  if (w.cloze_no) {
+    lines[lines.length - 1] += ",";
+    lines.push(`    cloze_no: ${JSON.stringify(w.cloze_no)},`);
+    lines.push(`    cloze_answer: ${JSON.stringify(w.cloze_answer || w.no)}`);
+  }
+
+  // Include confusions if present
+  if (w.confusions && w.confusions.length > 0) {
+    lines[lines.length - 1] += ",";
+    lines.push(`    confusions: ${JSON.stringify(w.confusions)}`);
+  }
+
+  lines.push(`  }`);
+  return lines.join("\n");
+}
+
+document.getElementById("exportData")?.addEventListener("click", () => {
+  if (customWords.length === 0) {
+    showToast("No custom words to export");
+    return;
+  }
+
+  // Build output that can be pasted directly into the WORDS array in words.js
+  const header = `// Exported custom words — ${todayStr()}\n// Paste these entries into the WORDS array in words.js\n\n`;
+  const entries = customWords.map(w => wordToJS(w)).join(",\n");
+  const output = header + entries;
+
+  const blob = new Blob([output], { type: "text/javascript" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `norsk-backup-${todayStr()}.json`;
+  a.download = `my-words-${todayStr()}.js`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 
-  showToast("Data exported");
+  showToast(`Exported ${customWords.length} words`);
 });
 
 document.getElementById("importData")?.addEventListener("click", () => {
@@ -1029,61 +1069,73 @@ document.getElementById("importFile")?.addEventListener("change", (e) => {
   const reader = new FileReader();
   reader.onload = (evt) => {
     try {
-      const data = JSON.parse(evt.target.result);
+      const text = evt.target.result.trim();
+      let words;
 
-      if (!data.version) {
-        showToast("Invalid backup file");
+      // Try parsing as JSON array first (in case they export/re-import)
+      try {
+        const parsed = JSON.parse(text);
+        words = Array.isArray(parsed) ? parsed : (parsed.customWords || null);
+      } catch {
+        // Try evaluating as JS object literals (the export format)
+        // Wrap in array brackets and parse
+        let cleaned = text;
+        // Strip comment lines
+        cleaned = cleaned.split("\n").filter(l => !l.trim().startsWith("//")).join("\n").trim();
+        // Remove trailing comma if present
+        if (cleaned.endsWith(",")) cleaned = cleaned.slice(0, -1);
+        // Wrap in array
+        cleaned = `[${cleaned}]`;
+        // Convert JS object notation to JSON (unquoted keys → quoted)
+        cleaned = cleaned.replace(/(\s)(no|en|pos|examples|example|example_en|cloze_no|cloze_answer|confusions)(\s*:)/g, '$1"$2"$3');
+        words = JSON.parse(cleaned);
+      }
+
+      if (!Array.isArray(words) || words.length === 0) {
+        showToast("No words found in file");
         return;
       }
 
-      // Determine what to import
-      const hasProgress = data.progress && typeof data.progress === "object";
-      const hasCustom = Array.isArray(data.customWords) && data.customWords.length > 0;
-
-      if (!hasProgress && !hasCustom) {
-        showToast("No data found in file");
+      // Validate each word has at least no and en
+      const valid = words.filter(w => w.no && w.en);
+      if (valid.length === 0) {
+        showToast("No valid words found (need 'no' and 'en' fields)");
         return;
       }
 
-      let msg = "Import will restore:";
-      if (hasProgress) msg += `\n• Progress (${Object.keys(data.progress.cards || {}).length} card states, ${data.progress.streak || 0}-day streak)`;
-      if (hasCustom) msg += `\n• ${data.customWords.length} custom word${data.customWords.length === 1 ? "" : "s"}`;
-      msg += "\n\nThis will REPLACE your current data. Continue?";
+      // Check for duplicates against existing words
+      const existingSet = new Set(WORDS.map(w => w.no.toLowerCase()));
+      const newWords = valid.filter(w => !existingSet.has(w.no.toLowerCase()));
+      const dupes = valid.length - newWords.length;
+
+      let msg = `Import ${newWords.length} word${newWords.length === 1 ? "" : "s"}?`;
+      if (dupes > 0) msg += `\n(${dupes} duplicate${dupes === 1 ? "" : "s"} skipped)`;
+      if (newWords.length === 0) {
+        showToast("All words already exist in your list");
+        return;
+      }
 
       if (!confirm(msg)) return;
 
-      // Import progress
-      if (hasProgress) {
-        state = Object.assign({}, DEFAULTS, data.progress, {
-          cards: data.progress.cards || {},
-          dailyHistory: data.progress.dailyHistory || {}
-        });
-        saveState();
-      }
+      // Add them
+      newWords.forEach(w => customWords.push(w));
+      saveCustomWords(customWords);
+      WORDS = getAllWords();
 
-      // Import custom words — merge or replace
-      if (hasCustom) {
-        // Replace entirely to keep indices consistent with imported progress
-        customWords = data.customWords;
-        saveCustomWords(customWords);
-        WORDS = getAllWords();
-      }
-
-      // Refresh everything
       refreshStats();
       renderCard();
       renderBrowseList();
       renderStatsScreen();
-      showToast(`Imported ${hasCustom ? data.customWords.length + " custom words + " : ""}progress`);
+      setText("customWordCount", customWords.length);
+      showToast(`Added ${newWords.length} words`);
 
     } catch (err) {
       console.error("Import error:", err);
-      showToast("Failed to read file — is it a valid backup?");
+      showToast("Couldn't parse file — check the format");
     }
   };
 
   reader.readAsText(file);
-  // Reset the input so the same file can be selected again
   e.target.value = "";
 });
 
